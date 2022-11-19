@@ -20,6 +20,10 @@ public class Drivercontrol extends LinearOpMode {
     // mecanum drive train
     private Mecanum mecanum;
 
+    // lin slide
+    private DcMotor linSlide;
+    private boolean lsManualControl = false;
+        
     // wobble goal manipulation system
     private DcMotor pivot;
     private Servo lock;
@@ -38,6 +42,10 @@ public class Drivercontrol extends LinearOpMode {
         mecanum = new Mecanum(hardwareMap.get(BNO055IMU.class, "imu"), hardwareMap.get(DcMotor.class, "motor1"), hardwareMap.get(DcMotor.class, "motor2"), hardwareMap.get(DcMotor.class, "motor3"), hardwareMap.get(DcMotor.class, "motor4"));
         mecanum.constantPower();
 
+        // lin slide
+        linSlide = hardwareMap.get(DcMotor.class, "linSlide");
+        linSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            
         // wobble goal manipulation system initialization
         pivot = hardwareMap.get(DcMotor.class, "pivot");
         pivot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -87,6 +95,27 @@ public class Drivercontrol extends LinearOpMode {
                 lock.setPosition(0);
             }
 
+            // lin slide
+            if (!lsManualControl) {lsManualControl = (gamepad2.dpad_up || gamepad2.dpad_down);}
+            if (lsManualControl) {
+                if (gamepad2.dpad_up) {
+                    linSlide.setPower(0.5);
+                } else if (gamepad2.dpad_down) {
+                    linSlide.setPower(-0.5);
+                } else {
+                    linSlide.setPower(0);
+                    linSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                }
+            } else { //Code to take claw to preset heights. Team member wants it to go same speed as manual
+                if (tierPos[currentPos][0] - linSlide.getCurrentPosition() > 20) {
+                    linSlide.setPower(0.5);
+                } else if (tierPos[currentPos][0] - linSlide.getCurrentPosition() < -20) {
+                    linSlide.setPower(-0.5);
+                } else {
+                    linSlide.setPower(0);
+                    linSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                }
+            }
 
             if (gamepad1.x) {
                 mecanum.reset();
